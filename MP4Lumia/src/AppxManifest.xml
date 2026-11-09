@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MP4Lumia — Windows 10 Mobile (UWP) package manifest.
+
+  The Nokia Lumia 929 runs Windows 10 Mobile (10.0.15254), which only installs
+  UWP packages for ARM with a TargetDeviceFamily. This follows the exact shape
+  of PrivateBrowse-Mobile-1.0.0.1.appx and FreePaint.appx, both of which install
+  on this phone:
+
+    * foundation/windows10 namespace with uap:VisualElements
+    * ProcessorArchitecture="arm"
+    * TargetDeviceFamily Windows.Universal 10.0.10586.0 .. 10.0.15254.0
+    * StartPage only, no Executable: a JavaScript/HTML app hosted by the OS
+
+  Identity@Publisher must equal the signing certificate subject exactly:
+  CN=MP4Lumia Dev (tools\build-appx.ps1 creates it and signs with it).
+
+  videosLibrary lets the app enumerate the phone's Videos folder. Files picked
+  with the file picker need no capability. The file-type associations make
+  MP4Lumia available as an "open with" target for the video formats.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  IgnorableNamespaces="uap mp">
+
+  <Identity
+    Name="MP4Lumia.Mobile"
+    Publisher="CN=MP4Lumia Dev"
+    Version="1.0.0.0"
+    ProcessorArchitecture="arm" />
+
+  <mp:PhoneIdentity
+    PhoneProductId="a7c1e4f2-3b6d-4f8a-9c21-5e7d0b43a916"
+    PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+
+  <Properties>
+    <DisplayName>MP4Lumia</DisplayName>
+    <PublisherDisplayName>MP4Lumia Dev</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily
+      Name="Windows.Universal"
+      MinVersion="10.0.10586.0"
+      MaxVersionTested="10.0.15254.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App" StartPage="default.html">
+      <uap:VisualElements
+        DisplayName="MP4Lumia"
+        Description="A Netflix-style player for the videos on your phone"
+        BackgroundColor="#08080A"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile
+          Wide310x150Logo="Assets\Wide310x150Logo.png"
+          Square71x71Logo="Assets\Square71x71Logo.png"
+          Square310x310Logo="Assets\Square310x310Logo.png" />
+        <uap:SplashScreen
+          Image="Assets\SplashScreen.png"
+          BackgroundColor="#08080A" />
+      </uap:VisualElements>
+
+      <Extensions>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="mp4lumiavideo">
+            <uap:DisplayName>MP4Lumia video</uap:DisplayName>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.mp4</uap:FileType>
+              <uap:FileType>.m4v</uap:FileType>
+              <uap:FileType>.mov</uap:FileType>
+              <uap:FileType>.mkv</uap:FileType>
+              <uap:FileType>.avi</uap:FileType>
+              <uap:FileType>.wmv</uap:FileType>
+              <uap:FileType>.asf</uap:FileType>
+              <uap:FileType>.mpg</uap:FileType>
+              <uap:FileType>.mpeg</uap:FileType>
+              <uap:FileType>.ts</uap:FileType>
+              <uap:FileType>.m2ts</uap:FileType>
+              <uap:FileType>.3gp</uap:FileType>
+              <uap:FileType>.3g2</uap:FileType>
+              <uap:FileType>.webm</uap:FileType>
+              <uap:FileType>.flv</uap:FileType>
+              <uap:FileType>.vob</uap:FileType>
+              <uap:FileType>.ogv</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <uap:Capability Name="videosLibrary" />
+  </Capabilities>
+</Package>

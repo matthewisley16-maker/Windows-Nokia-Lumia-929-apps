@@ -1,0 +1,61 @@
+MP4Lumia - Nokia Lumia 929 / Windows 10 Mobile
+==============================================
+
+A Netflix-style video player for the videos already on the phone. Local only:
+no account, no network, no Store.
+
+FILES IN THIS FOLDER
+  MP4Lumia.appx          signed ARM package for Windows 10 Mobile
+  MP4Lumia-RootCA.cer    the root the package chains to - trust this on the phone
+  MP4Lumia-Dev.cer       the signing certificate itself, for reference
+  AppxManifest.xml       the manifest inside the package, for reference
+  INSTALL.txt            this file
+
+INSTALL - the same steps that worked for PrivateBrowse and FreePaint
+  1. Copy MP4Lumia.appx and MP4Lumia-RootCA.cer into the phone's own storage,
+     for example: This Device > Downloads > MP4Lumia.
+     Do not leave them only in OneDrive.
+  2. Settings > Update & security > For developers > Developer mode.
+     Choose Developer mode, not "Sideload apps", then restart the phone.
+  3. Open MP4Lumia-RootCA.cer from the phone's file manager and install it as a
+     trusted root. If the page only shows certificate details with no install
+     button, it is not installed yet.
+  4. Open MP4Lumia.appx from the same folder and confirm the install prompt.
+     It takes a few seconds; MP4Lumia then appears in the app list.
+  5. If nothing appears, restart the phone and search All apps for MP4Lumia,
+     or check Settings > Apps > Apps & features.
+
+FIRST RUN
+  Tap "Add videos" and pick files from Downloads, Videos, SD card or OneDrive
+  files that are kept on the device.
+  "Scan Videos folder" adds everything it finds in This Device > Videos,
+  including subfolders.
+
+IF SOMETHING GOES WRONG
+  0x800B0109  root not trusted on the phone - install MP4Lumia-RootCA.cer
+  0x80073CFF  not in Developer mode - step 2
+  0x80073CF3  architecture or dependency conflict - you are opening an older or
+              different package; use this file (about 60 KB)
+  0x80073CF0  truncated copy - copy MP4Lumia.appx again
+  Settings > System > About shows the OS build. This package needs 10.0.10586
+  or later; a Lumia Icon on Windows 10 Mobile reports 10.0.15254.
+  A Windows 10 PC will also refuse this file: it is a phone package.
+
+PLAYBACK NOTES
+  Video is decoded by the phone's own Media Foundation stack through the app's
+  video element. MP4/H.264 with AAC is the safest combination and plays
+  everywhere. MKV, AVI, WMV, MOV, TS and 3GP play when the container's codecs
+  are ones the phone knows. A file with an unsupported codec (for example HEVC
+  without the extension, or AC-3 audio) shows a message in the player with an
+  "Open in Movies & TV" button.
+
+ABOUT THE SIGNATURE
+  MP4Lumia Root CA is self-signed, CA:true, path length 0, valid 10 years.
+  MP4Lumia Dev is issued by it with the Code Signing EKU, valid 3 years.
+  Neither is timestamped and neither is from the Store: fine for sideloading,
+  unsuitable for anything else.
+
+PACKAGE
+  MP4Lumia.appx version 1.0.0.0, ARM, SHA256
+  D5B43C42C4B73872EA11D798560BAD24A71BD8C39324EABC791DA49F9FD272CF
+

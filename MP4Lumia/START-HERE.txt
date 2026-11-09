@@ -1,0 +1,53 @@
+MP4Lumia on the Nokia Lumia 929 - read this first
+=================================================
+
+WHAT IT IS
+A Netflix-style video player for the videos already on your phone. Rows,
+posters, a detail page, a full-screen player that remembers where you stopped,
+and Dark / Light / Default themes. No account and no network.
+
+WHAT TO INSTALL
+  appx\MP4Lumia.appx        the app (signed, ARM, Windows 10 Mobile)
+  appx\MP4Lumia-RootCA.cer  trust this first or the package is refused
+
+INSTALL (same steps that worked for PrivateBrowse and FreePaint)
+1. Copy the whole appx folder into the phone's own storage, for example
+   This Device > Downloads > MP4Lumia. Not OneDrive, not an online folder.
+2. Settings > Update & security > For developers > Developer mode.
+   Developer mode, not "Sideload apps". Restart the phone after changing it.
+3. Open MP4Lumia-RootCA.cer from the phone's file manager and install it as a
+   trusted root. If you only see certificate details and no install button, it
+   is not installed yet.
+4. Open MP4Lumia.appx from that same folder, confirm the install prompt, wait a
+   few seconds, then look for MP4Lumia in the app list.
+5. If it is not there: restart the phone, then search All apps for MP4Lumia or
+   check Settings > Apps > Apps & features.
+
+FIRST RUN
+  Tap "Add videos" to pick files, or "Scan Videos folder" to pull in everything
+  under This Device > Videos. Files you pick are remembered, so you only pick
+  them once.
+
+IF IT FAILS
+  0x800B0109  root not trusted on the phone - install MP4Lumia-RootCA.cer
+  0x80073CFF  not in Developer mode - step 2
+  0x80073CF3  wrong package - an old Windows Phone 8.1 build, not this one
+  0x80073CF0  incomplete copy - copy MP4Lumia.appx again
+  Settings > System > About shows the OS build. This package needs 10.0.10586
+  or later; a Lumia Icon on Windows 10 Mobile reports 10.0.15254.
+
+FORMATS
+  MP4/H.264 with AAC plays everywhere. MKV, AVI, WMV, MOV, TS, 3GP, WebM and FLV
+  play when the codecs inside are ones the phone knows. For a file with an
+  unsupported codec, open its page and use "Open in Movies & TV".
+
+WITHOUT INSTALLING
+  MP4Lumia.html is the same app as a single web page. Put it on OneDrive, open
+  it in Internet Explorer on the phone and pin it to Start. On a PC, open it in
+  any browser and add ?demo=1 to the address to see the interface with sample
+  titles.
+
+REBUILDING
+  powershell -ExecutionPolicy Bypass -File tools\fetch-sdk-tools.ps1
+  powershell -ExecutionPolicy Bypass -File tools\build-appx.ps1
+  Details, including what was and was not tested, are in README.md.

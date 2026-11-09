@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MP3Lumia — Windows 10 Mobile (UWP) package manifest.
+
+  The Nokia Lumia 929 (Lumia Icon) runs Windows 10 Mobile (10.0.15254). It only
+  installs UWP packages for ARM that declare a TargetDeviceFamily, with a hosted
+  HTML/JS StartPage. This is the same package shape as PrivateBrowse, FreePaint
+  and MP4Lumia, all of which install on this phone.
+
+  Identity@Publisher must equal the signing certificate subject exactly:
+  CN=MP3Lumia Dev (tools\build-appx.ps1 creates it and signs with it).
+
+  musicLibrary lets the app enumerate This Device > Music. Files chosen with the
+  picker need no capability. The file-type associations put MP3Lumia in the
+  "open with" list for audio files.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  IgnorableNamespaces="uap mp uap3">
+
+  <Identity
+    Name="MP3Lumia.Mobile"
+    Publisher="CN=MP3Lumia Dev"
+    Version="1.0.0.0"
+    ProcessorArchitecture="arm" />
+
+  <mp:PhoneIdentity
+    PhoneProductId="b3d9f6a2-5c17-4e8a-8f31-2a7c9d4e6b05"
+    PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+
+  <Properties>
+    <DisplayName>MP3Lumia</DisplayName>
+    <PublisherDisplayName>MP3Lumia Dev</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily
+      Name="Windows.Universal"
+      MinVersion="10.0.10586.0"
+      MaxVersionTested="10.0.15254.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App" StartPage="default.html">
+      <uap:VisualElements
+        DisplayName="MP3Lumia"
+        Description="A Spotify-style player for the music on your phone"
+        BackgroundColor="#0A0A0D"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile
+          Wide310x150Logo="Assets\Wide310x150Logo.png"
+          Square71x71Logo="Assets\Square71x71Logo.png"
+          Square310x310Logo="Assets\Square310x310Logo.png" />
+        <uap:SplashScreen
+          Image="Assets\SplashScreen.png"
+          BackgroundColor="#0A0A0D" />
+      </uap:VisualElements>
+
+      <Extensions>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="mp3lumiaaudio">
+            <uap:DisplayName>MP3Lumia music</uap:DisplayName>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.mp3</uap:FileType>
+              <uap:FileType>.mp2</uap:FileType>
+              <uap:FileType>.m4a</uap:FileType>
+              <uap:FileType>.m4b</uap:FileType>
+              <uap:FileType>.aac</uap:FileType>
+              <uap:FileType>.flac</uap:FileType>
+              <uap:FileType>.wav</uap:FileType>
+              <uap:FileType>.ogg</uap:FileType>
+              <uap:FileType>.oga</uap:FileType>
+              <uap:FileType>.opus</uap:FileType>
+              <uap:FileType>.wma</uap:FileType>
+              <uap:FileType>.aif</uap:FileType>
+              <uap:FileType>.aiff</uap:FileType>
+              <uap:FileType>.alac</uap:FileType>
+              <uap:FileType>.amr</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <uap:Capability Name="musicLibrary" />
+    <uap3:Capability Name="backgroundMediaPlayback" />
+  </Capabilities>
+</Package>

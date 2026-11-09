@@ -1,0 +1,6 @@
+# SDK build tools downloaded per app — never commit them
+.tooling/
+
+# Earlier side projects, kept on disk but outside this suite
+lumia-wifi-fix/
+pocketcraft-preview/

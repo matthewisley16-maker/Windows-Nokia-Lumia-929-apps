@@ -1,0 +1,82 @@
+MP3Lumia on the Nokia Lumia 929 - read this first
+==================================================
+
+WHAT IT IS
+A Spotify-style player for the music already on your phone: tags, albums,
+artists, playlists, a real queue, liked songs, lyrics, editable song/album
+metadata, and a 10-band equalizer with 35 presets plus your own saved curves.
+No account, no streaming service, no network.
+
+WHAT TO INSTALL
+  appx\MP3Lumia.appx        the app (signed, ARM, Windows 10 Mobile)
+  appx\MP3Lumia-RootCA.cer  trust this first or the package is refused
+
+INSTALL (the same steps used for MP4Lumia and the other apps)
+1. Copy the whole appx folder into the phone's own storage, for example
+   This Device > Downloads > MP3Lumia. Not OneDrive, not an online folder.
+2. Settings > Update & security > For developers > Developer mode.
+   Developer mode, not "Sideload apps". Restart the phone after changing it.
+3. Open MP3Lumia-RootCA.cer from the phone's file manager and install it as a
+   trusted root. If you only see certificate details and no install button, it
+   is not installed yet.
+4. Open MP3Lumia.appx from that same folder, confirm the install prompt, wait a
+   few seconds, then look for MP3Lumia in the app list.
+5. If it is not there: restart the phone, then search All apps for MP3Lumia or
+   check Settings > Apps > Apps & features.
+
+FIRST RUN
+  Tap "Add music files" to pick songs, or "Add a folder" for a whole folder.
+  On the phone, "Scan the Music folder" pulls in everything under
+  This Device > Music, including subfolders. Picked files are remembered, so
+  you only pick them once.
+
+EQUALIZER
+  Settings > Equalizer, or the EQ button on Now Playing.
+  Ten bands from 31 Hz to 16 kHz, +/-12 dB, with preamp, limiter, bypass and a
+  live response curve. Presets include Flat, Normal, Spotify, Spotify Punch,
+  Bass, Mids, Highs, Bass Boost, Treble Boost, Rock, Pop, Rap, Hip-Hop, R&B,
+  Classical, Jazz, Vocal, Podcast, Lo-Fi, Headphones and more - 35 in total.
+  Change any band, type a name and tap Save to keep your own preset. Custom
+  presets stay on the device until you delete them.
+
+EDITING TAGS
+  Song: three-dot menu on the track > Edit metadata. Change title, artist,
+  album, album artist, genre, year, track/disc numbers, composer and lyrics.
+  Album: open the album > More > Edit album info. The change is applied to every
+  song in that album and the album is re-filed under its new name/artist.
+  In the browser the edit is kept in MP3Lumia's library; browsers cannot rewrite
+  the audio file. On the phone the app also asks Windows to write the common
+  fields back into the file, but Windows can refuse depending on the file, so
+  the library copy is the reliable one.
+
+IF IT FAILS
+  0x800B0109  root not trusted on the phone - install MP3Lumia-RootCA.cer
+  0x80073CFF  not in Developer mode - step 2
+  0x80073CF3  wrong package or architecture - use this ARM package, not an
+              older or different one
+  0x80073CF0  incomplete copy - copy MP3Lumia.appx again
+  Settings > System > About shows the OS build. This package needs 10.0.10586
+  or later; a Lumia Icon on Windows 10 Mobile reports 10.0.15254.
+  A Windows 10 PC will refuse this file: it is a phone package.
+  This build has not been test-installed on a phone from the PC that made it;
+  the install steps above are the ones that worked for the sibling apps.
+
+FORMATS
+  Audio is decoded by the phone's own Media Foundation stack through the app's
+  audio element. MP3, WAV, AAC/M4A and WMA are the safe expectations; FLAC is
+  supported on later Windows 10 Mobile builds. Tags are read from ID3v1/v2
+  (MP3), Vorbis comments (FLAC/Ogg) and MP4 atoms (M4A), with embedded artwork.
+  The equalizer needs Web Audio; if the phone's engine lacks it, playback still
+  works and the EQ screen says the equalizer is bypassed.
+
+WITHOUT INSTALLING
+  MP3Lumia.html is the same app as a single web page. Put it on OneDrive, open
+  it in Internet Explorer on the phone and pin it to Start. On a PC, open it in
+  any browser and add ?demo=1 to the address to see a 15-track sample library.
+  In a browser you must re-add your files after a full reload; tags, playlists,
+  likes, queue and EQ settings are remembered.
+
+REBUILDING
+  powershell -ExecutionPolicy Bypass -File tools\fetch-sdk-tools.ps1
+  powershell -ExecutionPolicy Bypass -File tools\build-appx.ps1
+  Details, including exactly what was and was not tested, are in README.md.

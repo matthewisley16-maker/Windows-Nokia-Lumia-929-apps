@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html class="theme-dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="format-detection" content="telephone=no" />
+<meta name="msapplication-tap-highlight" content="no" />
+<meta name="msapplication-navbutton-color" content="#0b0b0f" />
+<title>MP4Lumia</title>
+<link rel="stylesheet" href="app.css" id="appcss" />
+</head>
+<body>
+
+<div id="boot"><div class="boot-mark">&#9654;</div><div class="boot-name">MP4LUMIA</div></div>
+<div id="jsfail">MP4Lumia could not start on this device. JavaScript must be enabled.</div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">&#9654;</span>
+    <span class="brand-name">MP4<b>LUMIA</b></span>
+  </div>
+  <div class="topbar-actions">
+    <button class="iconbtn" data-act="go-search" aria-label="Search">
+      <svg class="ico" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.4 15.4L21 21"/></svg>
+    </button>
+    <button class="iconbtn" id="themebtn" data-act="cycle-theme" data-mode="default" aria-label="Change theme">
+      <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main" class="main">
+  <section id="view-home" class="view active"></section>
+  <section id="view-library" class="view"></section>
+  <section id="view-list" class="view"></section>
+  <section id="view-settings" class="view"></section>
+</main>
+
+<nav class="tabbar">
+  <button class="tab on" data-act="tab" data-view="home">
+    <svg class="ico" viewBox="0 0 24 24"><path d="M3 10.6L12 3l9 7.6V21h-6v-6H9v6H3z"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="tab" data-act="tab" data-view="library">
+    <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>
+    <span>Library</span>
+  </button>
+  <button class="tab" data-act="tab" data-view="list">
+    <svg class="ico" viewBox="0 0 24 24"><path d="M12 20.3S4.5 15.6 4.5 10.4A4.4 4.4 0 0 1 12 7.2a4.4 4.4 0 0 1 7.5 3.2c0 5.2-7.5 9.9-7.5 9.9z"/></svg>
+    <span>My List</span>
+  </button>
+  <button class="tab" data-act="tab" data-view="settings">
+    <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1"/></svg>
+    <span>Settings</span>
+  </button>
+</nav>
+
+<div id="sheet" class="sheet"><div class="sheet-card" id="sheetc"></div></div>
+
+<div id="confirm" class="sheet">
+  <div class="confirm-card">
+    <div class="confirm-title" id="confirmtitle"></div>
+    <div class="confirm-body" id="confirmbody"></div>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" data-act="confirm-cancel">Cancel</button>
+      <button class="btn btn-danger" id="confirmok" data-act="confirm-ok">Remove</button>
+    </div>
+  </div>
+</div>
+
+<div id="player" class="player">
+  <div class="pstage" id="pstage">
+    <video id="vid" playsinline webkit-playsinline preload="metadata"></video>
+    <div class="ptouch" data-act="player-surface"></div>
+
+    <div class="pload" id="pload"></div>
+
+    <div class="pcenter">
+      <button class="pbig" id="pbig" data-act="player-toggle" aria-label="Play or pause"></button>
+    </div>
+
+    <div class="ptop" id="ptop">
+      <button class="pbtn pback" data-act="player-close" aria-label="Back">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M15 4l-8 8 8 8"/></svg>
+      </button>
+      <div class="ptitlebox">
+        <div class="ptitle" id="ptitle"></div>
+        <div class="psub" id="psub"></div>
+      </div>
+    </div>
+
+    <div class="pbottom" id="pbottom">
+      <div class="ptimes"><span id="pcur">0:00</span><span id="pdur">0:00</span></div>
+      <div class="pseek" id="pseek">
+        <div class="pbuf" id="pbuf"></div>
+        <div class="pfill" id="pfill"></div>
+        <div class="pknob" id="pknob"></div>
+      </div>
+      <div class="prow">
+        <button class="pbtn" data-act="player-back10" aria-label="Back 10 seconds">&#8634;10</button>
+        <button class="pbtn" id="ptoggle" data-act="player-toggle" aria-label="Play or pause"></button>
+        <button class="pbtn" data-act="player-fwd10" aria-label="Forward 10 seconds">10&#8635;</button>
+        <span class="pspacer"></span>
+        <button class="pbtn ptext" id="pspeed" data-act="player-speed">1&times;</button>
+        <button class="pbtn ptext" id="pfit" data-act="player-fit" aria-label="Fill screen">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="perr" id="perr">
+      <div class="perr-t">Can&#8217;t play this file</div>
+      <div class="perr-m" id="perrmsg"></div>
+      <button class="btn btn-ghost" data-act="player-error-external">Open in Movies &amp; TV</button>
+      <button class="btn btn-ghost" data-act="player-error-close">Close</button>
+    </div>
+
+    <div class="pend" id="pend">
+      <div class="pend-t">Finished</div>
+      <div class="pend-s" id="pends"></div>
+      <button class="btn btn-primary" data-act="player-replay">Replay</button>
+      <button class="btn btn-ghost" data-act="player-end-close">Back to library</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<input type="file" id="fileinput" multiple
+       accept="video/*,.mkv,.avi,.wmv,.mov,.ts,.m2ts,.flv,.3gp,.ogv,.vob" />
+<input type="file" id="dirinput" multiple webkitdirectory />
+
+<script src="boot.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
