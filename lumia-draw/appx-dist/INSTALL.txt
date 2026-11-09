@@ -1,0 +1,47 @@
+FreePaint - Nokia Lumia 929 / Windows 10 Mobile
+===============================================
+
+FILES IN THIS FOLDER
+  FreePaint.appx        signed ARM package for Windows 10 Mobile
+  FreePaint-RootCA.cer  the root the package chains to
+  FreePaint-Dev.cer     the signing certificate itself, for reference
+  AppxManifest.xml      the manifest inside the package, for reference
+  INSTALL.txt           this file
+
+WHY THE EARLIER PACKAGE WOULD NOT INSTALL
+It was built for Windows Phone 8.1: 2010 manifest schema, neutral architecture,
+no TargetDeviceFamily. This phone runs Windows 10 Mobile, which will not install
+that. The rebuild matches PrivateBrowse-Mobile-1.0.0.1.appx, the package that
+did install on this phone: foundation/windows10 schema, uap:VisualElements,
+ProcessorArchitecture="arm", TargetDeviceFamily Windows.Universal 10.0.10586.0
+to 10.0.15254.0, StartPage only (an HTML/JavaScript app, like PrivateBrowse).
+
+INSTALL - the same way PrivateBrowse worked
+  1. Copy FreePaint.appx and FreePaint-RootCA.cer into the phone's own storage,
+     for example: This Device > Downloads > FreePaint.
+     Do not leave them only in OneDrive.
+  2. Settings > Update & security > For developers > Developer mode.
+     Choose Developer mode, not "Sideload apps", then restart the phone.
+  3. Open FreePaint-RootCA.cer from the phone's file manager and install it as
+     a trusted root, if it is not already trusted. If the page only shows
+     certificate details with no install button, it is not installed.
+  4. Open FreePaint.appx from the same folder and confirm the install prompt.
+     It takes seconds; FreePaint then appears in the app list.
+  5. If nothing appears, restart the phone and search All apps for FreePaint,
+     or check Settings > Apps > Apps & features.
+
+IF IT STILL DOES NOTHING
+  0x800B0109  root not trusted on the phone - install FreePaint-RootCA.cer.
+  0x80073CFF  not in Developer mode - step 2.
+  0x80073CF3  architecture or dependency conflict - you are probably opening an
+              older neutral WP8.1 package; use this one (about 70 KB).
+  0x80073CF0  truncated copy - copy the file again.
+  Settings > System > About shows the OS build. This package needs 10.0.10586
+  or later; a Lumia Icon on Windows 10 Mobile is 10.0.15254.
+  A Windows 10 PC will also refuse this file: it is a phone package.
+
+ABOUT THE SIGNATURE
+FreePaint Root CA is self-signed, CA:true, path length 0, valid 10 years.
+FreePaint Dev is issued by it, carries the Code Signing EKU, valid 3 years.
+Neither is timestamped and neither is from the Store: fine for sideloading,
+unsuitable for anything else.

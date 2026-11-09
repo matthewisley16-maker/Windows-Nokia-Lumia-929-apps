@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  FreePaint — Windows 10 Mobile (UWP) package manifest.
+
+  This phone runs Windows 10 Mobile, not Windows Phone 8.1. The earlier package
+  used the 2010 WP8.1 schema with neutral architecture, which this OS will not
+  install. This follows the shape of PrivateBrowse-Mobile-1.0.0.1.appx, which did
+  install on the same phone:
+    * foundation/windows10 namespace with uap:VisualElements
+    * ProcessorArchitecture="arm"  (real phones are ARM)
+    * TargetDeviceFamily Windows.Universal 10.0.10586.0 .. 10.0.15254.0
+    * StartPage only, no Executable: a JavaScript/HTML app, hosted by the OS
+
+  Identity@Publisher must equal the signing certificate subject exactly:
+  CN=FreePaint Dev (tools\build-appx.ps1 creates and signs with it).
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  IgnorableNamespaces="uap mp">
+
+  <Identity
+    Name="FreePaint.Mobile"
+    Publisher="CN=FreePaint Dev"
+    Version="1.2.0.0"
+    ProcessorArchitecture="arm" />
+
+  <mp:PhoneIdentity
+    PhoneProductId="5d2c1f90-6a54-4c33-9a0e-2b7f3c8d41aa"
+    PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+
+  <Properties>
+    <DisplayName>FreePaint</DisplayName>
+    <PublisherDisplayName>FreePaint Dev</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily
+      Name="Windows.Universal"
+      MinVersion="10.0.10586.0"
+      MaxVersionTested="10.0.15254.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App" StartPage="default.html">
+      <uap:VisualElements
+        DisplayName="FreePaint"
+        Description="Draw and animate with your finger"
+        BackgroundColor="#0d1216"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile
+          Wide310x150Logo="Assets\Wide310x150Logo.png"
+          Square71x71Logo="Assets\Square71x71Logo.png"
+          Square310x310Logo="Assets\Square310x310Logo.png" />
+        <uap:SplashScreen
+          Image="Assets\SplashScreen.png"
+          BackgroundColor="#0d1216" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <Capability Name="internetClient" />
+  </Capabilities>
+</Package>

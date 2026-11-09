@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>PocketCraft</title>
+<script src="boot.js"></script>
+<style>
+@-ms-viewport{width:device-width;height:device-height;zoom:1.0;}
+@viewport{width:device-width;zoom:1.0;}
+html{-ms-text-size-adjust:100%;}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d1a26;
+  font-family:"Segoe UI","Segoe WP",Tahoma,Arial,sans-serif;color:#eef6ff;
+  -webkit-user-select:none;-ms-user-select:none;user-select:none;
+  -webkit-text-size-adjust:100%;}
+button{font-family:inherit;color:inherit;}
+
+/* shown until the script runs; if it is still visible the script never started */
+#jsfail{position:absolute;top:0;left:0;right:0;z-index:200;background:#5a0010;
+  color:#ffd7de;padding:6px;font:12px/1.3 Consolas,monospace;}
+#errbar{display:none;position:absolute;top:0;left:0;right:0;z-index:210;
+  background:#b00020;color:#fff;padding:6px;font:13px/1.35 Consolas,monospace;
+  word-wrap:break-word;}
+
+#stage{position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;
+  display:block;background:#8fbde8;
+  -ms-touch-action:none;touch-action:none;-ms-content-zooming:none;
+  -ms-user-select:none;user-select:none;}
+
+/* ---------------- top bar ---------------- */
+#top{position:absolute;top:0;left:0;right:0;z-index:6;height:44px;
+  padding:0 6px 0 10px;background:rgba(8,16,24,.74);
+  border-bottom:1px solid rgba(120,190,120,.28);white-space:nowrap;}
+#brand{display:inline-block;vertical-align:middle;line-height:44px;
+  font-size:17px;font-weight:600;letter-spacing:.6px;color:#d8f5c8;
+  text-shadow:0 1px 0 #14240f;}
+#brand b{color:#8fdc5a;}
+#top .right{float:right;}
+.tb{height:32px;min-width:40px;margin:6px 0 0 5px;padding:0 10px;
+  border:1px solid #3d5a44;border-radius:6px;background:#1b2c22;
+  font-size:13px;font-weight:600;color:#d9efd9;vertical-align:top;}
+.tb:active{background:#2a4433;border-color:#6fc24a;}
+.tb.ico{font-size:17px;padding:0 9px;}
+
+/* ---------------- bottom bars ---------------- */
+#bottom{position:absolute;left:0;right:0;bottom:0;z-index:6;padding:6px 8px 9px 8px;
+  background:rgba(8,16,24,.80);border-top:1px solid rgba(120,190,120,.28);}
+#moderow{white-space:nowrap;height:36px;}
+.mode{height:34px;min-width:64px;margin-right:5px;padding:0 12px;
+  border:1px solid #40584a;border-radius:6px;background:#16241c;
+  font-size:13px;font-weight:600;color:#cfe2cf;vertical-align:top;}
+.mode.on{background:#4f9c33;border-color:#7fd44f;color:#0d1a0c;}
+.zb{width:36px;height:34px;margin-right:5px;padding:0;
+  border:1px solid #40584a;border-radius:6px;background:#16241c;
+  font-size:19px;line-height:30px;color:#d7ecd7;vertical-align:top;}
+.zb:active,.mode:active{background:#2b4535;}
+#selName{display:inline-block;margin-left:4px;font-size:12px;color:#9dc0a6;
+  line-height:34px;vertical-align:top;}
+
+#hotbar{white-space:nowrap;overflow-x:auto;overflow-y:hidden;height:58px;
+  padding:3px 0 0 0;font-size:0;}
+.slot{display:inline-block;width:52px;height:50px;margin-right:5px;padding:0;
+  border:2px solid #2e4234;border-radius:8px;background:#243024;
+  vertical-align:top;position:relative;overflow:hidden;}
+.slot i{display:block;height:26px;margin:4px 4px 0 4px;border-radius:4px;
+  border:1px solid rgba(0,0,0,.35);}
+.slot span{display:block;font-size:9.5px;line-height:12px;color:#eaf6ea;
+  text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  padding:0 2px;}
+.slot.on{border-color:#8fe05a;box-shadow:0 0 0 1px #8fe05a inset;}
+.slot.on i{outline:1px solid #d8ffc0;}
+
+#hint{position:absolute;left:50%;bottom:118px;z-index:7;transform:translateX(-50%);
+  max-width:86%;padding:8px 13px;border-radius:12px;
+  background:rgba(8,16,24,.88);border:1px solid rgba(140,210,120,.35);
+  color:#d9efd9;font-size:12.5px;line-height:1.45;text-align:center;}
+#hint b{color:#9ee86a;}
+#hint.off{display:none;}
+
+/* ---------------- sheets ---------------- */
+.overlay{position:absolute;top:0;left:0;right:0;bottom:0;z-index:50;display:none;
+  background:rgba(4,8,12,.93);padding:16px;overflow:auto;}
+.overlay.on{display:block;}
+.box{max-width:520px;margin:0 auto;background:#101c20;border:1px solid #27403a;
+  border-radius:14px;padding:16px;}
+.box h2{margin:0 0 10px 0;font-size:19px;font-weight:400;color:#f0fff0;}
+.box p{color:#c2d8c8;font-size:13.5px;line-height:1.55;margin:6px 0 12px 0;}
+.box pre{font:12px/1.5 Consolas,"Courier New",monospace;color:#c9e6d2;
+  white-space:pre-wrap;word-wrap:break-word;margin:0 0 12px 0;}
+.primary{display:block;width:100%;height:46px;margin-top:10px;border-radius:8px;
+  border:1px solid #7fd44f;background:#4f9c33;color:#0b160a;
+  font-size:15px;font-weight:700;}
+.ghost{display:block;width:100%;height:42px;margin-top:8px;border-radius:8px;
+  border:1px solid #33503f;background:#16241c;color:#cfe4d0;font-size:14px;}
+</style>
+</head>
+<body>
+
+<div id="jsfail">PocketCraft's script did not start on this device.</div>
+<div id="errbar"></div>
+
+<canvas id="stage"></canvas>
+
+<div id="top">
+  <span id="brand">Pocket<b>Craft</b></span>
+  <span class="right">
+    <button class="tb ico" id="btnRotate" title="Turn the world">&#8635;</button>
+    <button class="tb" id="btnNew">New</button>
+    <button class="tb ico" id="btnInfo" title="Device info">i</button>
+  </span>
+</div>
+
+<div id="bottom">
+  <div id="moderow">
+    <button class="mode on" id="modeBuild">Build</button>
+    <button class="mode" id="modeBreak">Break</button>
+    <button class="zb" id="zoomOut">&#8722;</button>
+    <button class="zb" id="zoomIn">+</button>
+    <span id="selName">Grass</span>
+  </div>
+  <div id="hotbar"></div>
+</div>
+
+<div id="hint">Tap a block face to <b>build</b>. Pick <b>Break</b> to dig. Drag to pan, <b>&#8635;</b> turns the view.</div>
+
+<div id="sheet" class="overlay">
+  <div class="box">
+    <h2>Device info</h2>
+    <pre id="sheetText"></pre>
+    <button class="primary" id="sheetOk">Close</button>
+  </div>
+</div>
+
+<div id="confirm" class="overlay">
+  <div class="box">
+    <h2>Start a new world?</h2>
+    <p>The world on screen is replaced by a freshly generated one. The old world is not kept.</p>
+    <button class="primary" id="newYes">Create new world</button>
+    <button class="ghost" id="newNo">Keep this world</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

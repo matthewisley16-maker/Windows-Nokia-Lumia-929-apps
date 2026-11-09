@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>FreePaint</title>
+<script src="boot.js"></script>
+<style>
+@-ms-viewport{width:device-width;height:device-height;zoom:1.0;}
+@viewport{width:device-width;zoom:1.0;}
+html{-ms-text-size-adjust:100%;}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0a0e12;
+  font-family:"Segoe UI","Segoe WP",Tahoma,Arial,sans-serif;color:#e6f0ea;
+  -webkit-user-select:none;-ms-user-select:none;user-select:none;
+  -webkit-text-size-adjust:100%;}
+button{font-family:inherit;color:inherit;}
+
+/* Shown until the script runs; if it is still on screen, the script never started. */
+#jsfail{position:absolute;top:0;left:0;right:0;z-index:120;background:#5a0010;
+  color:#ffd7de;padding:6px;font:12px/1.3 Consolas,monospace;}
+#errbar{display:none;position:absolute;top:0;left:0;right:0;z-index:130;
+  background:#b00020;color:#fff;padding:6px;font:13px/1.35 Consolas,monospace;
+  word-wrap:break-word;}
+
+.screen{position:absolute;top:0;left:0;right:0;bottom:0;display:none;}
+.screen.on{display:block;}
+
+/* ---------------- home ---------------- */
+#home{overflow-y:auto;padding:14px 16px 24px 16px;
+  background:linear-gradient(180deg,#0d151b 0%,#0a0e12 45%,#0a1116 100%);}
+.homehead{display:table;width:100%;margin:2px 0 16px 0;}
+.homehead .brand{display:table-cell;vertical-align:middle;}
+.homehead .cta{display:table-cell;vertical-align:middle;text-align:right;width:1%;}
+.logo{display:inline-block;width:46px;height:46px;line-height:46px;text-align:center;
+  border-radius:12px;vertical-align:middle;margin-right:11px;
+  background:linear-gradient(135deg,#00c853,#00acc1);color:#04120a;
+  font:700 17px "Segoe UI",Tahoma,sans-serif;letter-spacing:.5px;}
+.brandtext{display:inline-block;vertical-align:middle;}
+.brandtext h1{margin:0;font-size:27px;font-weight:300;letter-spacing:.5px;color:#f2fff8;}
+.brandtext p{margin:2px 0 0 0;font-size:12.5px;color:#88a79a;letter-spacing:.3px;}
+.pill{height:42px;padding:0 18px;border-radius:21px;border:1px solid #00c853;
+  background:#00a846;color:#04120a;font-size:14px;font-weight:600;}
+.pill:active{background:#00c853;}
+
+.grid{font-size:0;margin:0 -6px;}
+.hint{color:#7d9a8e;font-size:13.5px;line-height:1.5;max-width:520px;margin:8px 2px 0 2px;}
+
+.card{position:relative;display:inline-block;vertical-align:top;
+  width:31.6%;margin:0 0.7% 12px 0.7%;padding:0;text-align:left;
+  background:#111a20;border:1px solid #1e2d36;border-radius:11px;overflow:hidden;}
+.card:active{border-color:#00c853;}
+.card .thumb{display:block;width:100%;height:82px;background:#ffffff center/cover no-repeat;}
+.card .meta{display:block;padding:7px 9px 9px 9px;}
+.card .meta b{display:block;font-size:13px;font-weight:600;color:#e9f6ef;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card .meta span{display:block;font-size:11px;color:#7d9a8e;margin-top:2px;}
+.card .del{position:absolute;top:5px;right:5px;width:26px;height:26px;padding:0;
+  border-radius:50%;border:1px solid rgba(255,255,255,.35);
+  background:rgba(4,8,10,.62);color:#fff;font:15px/22px Tahoma,sans-serif;}
+.card .del:active{background:#b00020;}
+
+.newcard{display:inline-block;vertical-align:top;width:31.6%;
+  margin:0 0.7% 12px 0.7%;height:120px;background:#0e171d;
+  border:2px dashed #2b4652;border-radius:11px;color:#8fb3a4;
+  font-size:14px;}
+.newcard b{display:block;font-size:26px;font-weight:300;color:#00c853;margin-bottom:3px;}
+.newcard:active{border-color:#00c853;color:#dbe9e4;}
+
+/* ---------------- overlays ---------------- */
+.overlay{position:absolute;top:0;left:0;right:0;bottom:0;z-index:40;display:none;
+  background:rgba(3,6,8,.94);padding:14px;overflow:auto;}
+.overlay.on{display:block;}
+.sheetbox{max-width:520px;margin:0 auto;background:#101a20;border:1px solid #22343d;
+  border-radius:14px;padding:15px;}
+.sheetbox h2{margin:0 0 10px 0;font-size:19px;font-weight:400;color:#fff;}
+.sheetbox p{color:#c5d8d0;font-size:13.5px;line-height:1.5;margin:6px 0;}
+.sheetbox .note{color:#8fb3a4;font-size:12px;}
+.primary{display:block;width:100%;height:46px;margin-top:10px;border-radius:8px;
+  border:1px solid #00c853;background:#00a846;color:#04120a;
+  font-size:15px;font-weight:600;}
+.ghostb{display:block;width:100%;height:42px;margin-top:8px;border-radius:8px;
+  border:1px solid #2b4652;background:#16232a;color:#cfe0d8;font-size:14px;}
+.danger{display:block;width:100%;height:46px;margin-top:10px;border-radius:8px;
+  border:1px solid #d84660;background:#b00020;color:#fff;
+  font-size:15px;font-weight:600;}
+.danger:active{background:#d81b3c;}
+.fpsbig{text-align:center;margin:8px 0 14px 0;}
+.fpsbig b{display:block;font-size:48px;font-weight:300;color:#eafff2;line-height:1;}
+.fpsbig span{display:block;font-size:12px;color:#8fb3a4;margin-top:5px;}
+.fpsrow{font-size:0;white-space:nowrap;margin:0 0 10px 0;}
+.stepb{display:inline-block;width:50px;height:44px;padding:0;margin:0;
+  border-radius:8px;border:1px solid #2b4652;background:#16232a;color:#e9f6ef;
+  font-size:21px;vertical-align:middle;}
+.stepb:active{background:#1d333d;}
+#fpsrange{display:inline-block;width:78%;width:calc(100% - 116px);
+  height:44px;margin:0 8px;vertical-align:middle;}
+.presets{font-size:0;margin:0 0 8px 0;}
+.chip{display:inline-block;min-width:44px;height:34px;margin:0 5px 5px 0;padding:0 8px;
+  border-radius:17px;border:1px solid #2b4652;background:#16232a;color:#cfe0d8;
+  font-size:13px;}
+.chip.on{background:#00a846;border-color:#00c853;color:#04120a;font-weight:600;}
+.field{margin:10px 0 4px 0;}
+.field label{display:block;font-size:12px;color:#8fb3a4;margin-bottom:4px;}
+.field input{width:100%;height:42px;padding:0 10px;border-radius:8px;
+  border:1px solid #2b4652;background:#0c151a;color:#eaf6f0;font-size:15px;}
+.types{font-size:0;margin:8px -5px 0 -5px;}
+.typeopt{display:inline-block;width:48%;margin:0 1% 0 1%;padding:11px 8px;
+  border-radius:9px;border:1px solid #2b4652;background:#16232a;
+  color:#cfe0d8;font-size:14px;text-align:center;}
+.typeopt small{display:block;font-size:11px;color:#7d9a8e;margin-top:3px;}
+.typeopt.on{border-color:#00c853;background:#123524;color:#eafff2;}
+.typeopt.on small{color:#8ad6a8;}
+
+/* ---------------- editor ---------------- */
+#editor{background:#0a0e12;}
+#bar{position:absolute;top:0;left:0;right:0;z-index:3;padding:4px 5px;
+  background:#0d151b;border-bottom:1px solid #1b2a32;}
+#barhead{height:34px;white-space:nowrap;padding:0 1px;}
+#barhead .tool.nav{height:30px;line-height:26px;vertical-align:top;}
+#bartitle{display:inline-block;vertical-align:top;line-height:30px;margin-left:7px;
+  font-size:12px;color:#8fb3a4;max-width:52%;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+#barchev{float:right;width:48px;height:30px;margin:0;padding:0;border-radius:6px;
+  border:1px solid #2b4652;background:#16232a;color:#bfe8d3;font-size:11px;}
+#barchev:active{background:#1d333d;}
+.row{white-space:nowrap;overflow-x:auto;overflow-y:hidden;}
+.row2{margin-top:4px;}
+.tool{height:34px;min-width:40px;margin-right:3px;padding:0 7px;
+  background:#16232a;color:#dbe9e4;border:1px solid #263c47;border-radius:6px;
+  font-size:11.5px;vertical-align:top;}
+.tool:active{background:#1d333d;}
+.tool.on{background:#00a846;border-color:#00c853;color:#04120a;font-weight:600;}
+.tool.off{opacity:.38;}
+.tool.nav{font-size:19px;line-height:30px;padding:0 10px;}
+.tool.sm{height:30px;font-size:11px;padding:0 6px;min-width:36px;}
+.colorbtn{padding-left:5px;}
+#cprev{display:inline-block;width:16px;height:16px;border-radius:50%;
+  background:#111;border:1px solid #6f8d81;vertical-align:-3px;margin-right:4px;}
+.sz{display:inline-block;width:28px;height:26px;margin-right:5px;padding:0;
+  background:#16232a;color:#dbe9e4;border:1px solid #263c47;border-radius:5px;
+  font-size:11.5px;line-height:24px;text-align:center;vertical-align:top;}
+.sz.on{background:#00a846;border-color:#00c853;color:#04120a;font-weight:600;}
+.lbl{display:inline-block;color:#7d9a8e;font-size:11px;margin:0 6px 0 2px;
+  vertical-align:8px;}
+#anim{display:none;margin-top:5px;border-top:1px solid #1b2a32;padding-top:5px;}
+#anim.on{display:block;}
+.fstat{display:inline-block;min-width:38px;color:#8fb3a4;font-size:11px;
+  line-height:30px;text-align:center;vertical-align:middle;}
+.thumbf{display:inline-block;width:40px;height:26px;margin-right:4px;padding:0;
+  border:2px solid #263c47;border-radius:4px;background:#fff;vertical-align:middle;}
+.thumbf.on{border-color:#00c853;}
+
+#stage{position:absolute;left:0;right:0;bottom:0;top:80px;overflow:hidden;
+  background:#070a0c;}
+#paper{display:block;width:100%;height:100%;background:#ffffff;
+  -ms-touch-action:none;touch-action:none;-ms-content-zooming:none;
+  cursor:crosshair;}
+#zoombadge{position:absolute;right:6px;bottom:5px;z-index:4;pointer-events:none;
+  background:rgba(4,8,10,.6);color:#bfe8d3;border-radius:4px;padding:1px 5px;
+  font:11px Consolas,monospace;}
+
+#wheel{display:block;width:232px;height:232px;margin:4px auto 6px auto;
+  -ms-touch-action:none;touch-action:none;}
+.wheelrow{text-align:center;margin-bottom:4px;}
+.wprev{display:inline-block;width:26px;height:26px;border-radius:50%;
+  border:2px solid #ffffff;vertical-align:middle;background:#111;}
+.whex{display:inline-block;vertical-align:middle;margin-left:8px;color:#cfe0d8;
+  font:13px Consolas,monospace;}
+
+#shot{display:block;width:100%;height:auto;margin:10px 0;background:#fff;
+  border:1px solid #24424c;border-radius:4px;}
+
+#diag pre{font:12px/1.45 Consolas,"Courier New",monospace;color:#cfe8db;
+  white-space:pre-wrap;word-wrap:break-word;margin:0 0 10px 0;}
+
+#toast{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+  z-index:60;background:rgba(0,168,70,.95);color:#04120a;border-radius:14px;
+  padding:7px 14px;font-size:13px;display:none;max-width:90%;text-align:center;}
+#toast.on{display:block;}
+</style>
+</head>
+<body>
+
+<div id="jsfail">FreePaint's script did not start on this device.</div>
+<div id="errbar"></div>
+
+<!-- ================= home ================= -->
+<div id="home" class="screen on">
+  <div class="homehead">
+    <div class="brand">
+      <span class="logo">FP</span><span class="brandtext">
+        <h1>FreePaint</h1>
+        <p>draw &amp; animate &mdash; projects on your Lumia</p>
+      </span>
+    </div>
+    <div class="cta">
+      <button class="pill" data-act="new">+ New project</button>
+    </div>
+  </div>
+  <div id="grid" class="grid"></div>
+  <div id="emptyhint" class="hint" style="display:none">
+    No projects yet. Tap <b>New project</b> to start: a single <b>painting</b>,
+    or a <b>flipbook</b> you can animate frame by frame.
+  </div>
+  <div class="hint" style="margin-top:16px">
+    <button class="ghostb" style="width:auto;height:30px;padding:0 12px;display:inline-block"
+      data-act="info">device info</button>
+  </div>
+</div>
+
+<!-- ================= editor ================= -->
+<div id="editor" class="screen">
+  <div id="bar">
+    <div id="barhead">
+      <button class="tool nav" data-act="home" title="Projects">&#8249;</button>
+      <span id="bartitle">Pen</span>
+      <button id="barchev" data-act="menu" title="Hide menu">&#9650;</button>
+    </div>
+    <div id="barmenu">
+      <div class="row">
+        <button class="tool on" data-act="tool" data-tool="pen">Pen</button>
+        <button class="tool" data-act="tool" data-tool="eraser">Eraser</button>
+        <button class="tool" data-act="tool" data-tool="select">Select</button>
+        <button class="tool" data-act="undo">Undo</button>
+        <button class="tool" data-act="clear">Clear</button>
+        <button class="tool colorbtn" data-act="wheel"><span id="cprev"></span>Colour</button>
+        <button class="tool" data-act="save">Save</button>
+        <button class="tool fliponly" data-act="frames">Frames</button>
+        <button class="tool" data-act="zoomout">&#8722;</button>
+        <button class="tool" data-act="zoomin">+</button>
+        <button class="tool" data-act="zoomfit">Fit</button>
+      </div>
+      <div class="row row2">
+        <span class="lbl">Size</span><span id="sizes"></span>
+      </div>
+      <div id="anim">
+        <div class="row"><span class="fstat" id="fstat">1 / 1</span><span id="thumbs"></span></div>
+        <div class="row row2">
+          <button class="tool sm" data-act="newframe">+ Frame</button>
+          <button class="tool sm" data-act="copyframe">Copy</button>
+          <button class="tool sm" data-act="delframe">Delete</button>
+          <button class="tool sm" data-act="play" id="bplay">Play</button>
+          <button class="tool sm" data-act="fps" id="bfps">10 fps</button>
+          <button class="tool sm on" data-act="onion" id="bonion">Onion</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="stage"><canvas id="paper"></canvas></div>
+  <div id="zoombadge">100%</div>
+</div>
+
+<!-- ================= overlays ================= -->
+<div id="newsheet" class="overlay">
+  <div class="sheetbox">
+    <h2>New project</h2>
+    <div class="field">
+      <label for="pname">Name</label>
+      <input id="pname" maxlength="26" type="text" value="Untitled">
+    </div>
+    <div class="types">
+      <button class="typeopt on" data-act="settype" data-type="paint">Painting<small>one canvas</small></button>
+      <button class="typeopt" data-act="settype" data-type="flip">Flipbook<small>unlimited frames</small></button>
+    </div>
+    <button class="primary" data-act="create">Create</button>
+    <button class="ghostb" data-act="cancelnew">Cancel</button>
+  </div>
+</div>
+
+<div id="wheelsheet" class="overlay">
+  <div class="sheetbox">
+    <h2>Pen colour</h2>
+    <canvas id="wheel" width="420" height="420"></canvas>
+    <div class="wheelrow"><span id="wprev" class="wprev"></span><span id="whex">#111111</span></div>
+    <p class="note">Inside the ring sets how strong and how dark the colour is.</p>
+    <button class="primary" data-act="closewheel">Done</button>
+  </div>
+</div>
+
+<div id="sheet" class="overlay">
+  <div class="sheetbox">
+    <h2>Saved</h2>
+    <p id="sheetnote" class="note"></p>
+    <p><b>Power + Volume Up</b> saves the screen to <b>Photos &rsaquo; Screenshots</b>.</p>
+    <p>Or long-press the preview below and choose <b>save picture</b>.</p>
+    <img id="shot" alt="your drawing">
+    <button class="primary" data-act="closesheet">Back to drawing</button>
+  </div>
+</div>
+
+<div id="diag" class="overlay">
+  <div class="sheetbox">
+    <h2>Device info</h2>
+    <pre id="diagtext"></pre>
+    <button class="primary" data-act="closediag">Close</button>
+  </div>
+</div>
+
+<div id="fpsheet" class="overlay">
+  <div class="sheetbox">
+    <h2>Animation speed</h2>
+    <div class="fpsbig"><b id="fpsvalue">10</b><span>frames per second</span></div>
+    <div class="fpsrow">
+      <button class="stepb" data-act="fpsstep" data-d="-1">&#8722;</button>
+      <input id="fpsrange" type="range" min="1" max="60" step="1" value="10">
+      <button class="stepb" data-act="fpsstep" data-d="1">+</button>
+    </div>
+    <div id="fpspresets" class="presets"></div>
+    <p class="note">Higher is faster. 10&ndash;15 suits hand-drawn flipbooks; 24 feels like film.</p>
+    <button class="primary" data-act="fpsdone">Done</button>
+  </div>
+</div>
+
+<div id="confirmsheet" class="overlay">
+  <div class="sheetbox">
+    <h2 id="ctitle">Delete project?</h2>
+    <p id="cmsg"></p>
+    <button class="danger" id="cok" data-act="confirmyes">Delete</button>
+    <button class="ghostb" data-act="confirmno">Cancel</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

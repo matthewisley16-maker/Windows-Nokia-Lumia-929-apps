@@ -1,0 +1,41 @@
+FreePaint on the Nokia Lumia 929 - read this first
+==================================================
+
+WHAT WAS WRONG
+The earlier package was built for Windows Phone 8.1. This phone runs Windows 10
+Mobile, which refuses that package shape: it wants a UWP package for ARM with a
+TargetDeviceFamily. That is why the install prompt closed and nothing appeared
+in the app list.
+
+The proof is on this PC: PrivateBrowse-Mobile-1.0.0.1.appx installed on your
+phone, and it is a UWP ARM package with StartPage="default.html" - the same kind
+of app as FreePaint. FreePaint is now built exactly the same way.
+
+INSTALL (the steps that worked for PrivateBrowse)
+1. Copy the whole FreePaint\appx folder into the phone's own storage, e.g.
+   This Device > Downloads > FreePaint. Not OneDrive, not an online folder.
+2. Settings > Update & security > For developers > Developer mode.
+   Developer mode, not "Sideload apps". Restart the phone after changing it.
+3. Open FreePaint-RootCA.cer from the phone's file manager and install it as a
+   trusted root, if it is not already trusted.
+4. Open FreePaint.appx from that same folder, confirm the install prompt, wait a
+   few seconds, then look in the app list.
+5. If it is not there: restart the phone, then search All apps for FreePaint, or
+   check Settings > Apps > Apps & features.
+
+IF IT STILL FAILS
+  0x800B0109  root not trusted on the phone - install FreePaint-RootCA.cer
+  0x80073CFF  not in Developer mode - step 2
+  0x80073CF3  wrong package - an old Windows Phone 8.1 build, not this one
+  0x80073CF0  incomplete copy - copy FreePaint.appx again
+Settings > System > About shows the OS build. This package needs 10.0.10586 or
+later; a Lumia Icon on Windows 10 Mobile reports 10.0.15254.
+
+THE STORE DOES NOT MATTER
+The Store being broken or unable to update changes nothing here. This install is
+local, from the two files in this folder, exactly like PrivateBrowse was.
+
+FILES
+  appx\FreePaint.appx        signed ARM UWP package - this is the app
+  appx\FreePaint-RootCA.cer  trusted root for its signature
+  FreePaint.html             the same app as a web page (fallback)
