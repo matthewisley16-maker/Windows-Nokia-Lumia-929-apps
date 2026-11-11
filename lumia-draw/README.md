@@ -49,8 +49,11 @@ folder and open `http://<this-pc-ip>:8000` in IE, then pin to Start.
   native touch path on this phone), with touch and mouse fallbacks. Pinch zoom, text
   selection and the long-press menu are suppressed, so a dragging finger draws
   instead of panning or selecting.
-- **Pen / Eraser** — tap to switch. The eraser clears to the paper, so exports are
-  clean PNGs rather than transparent holes.
+- **Pen / Eraser / Bucket** — tap to switch. The eraser clears to the paper, so
+  exports are clean PNGs rather than transparent holes. The bucket floods the
+  closed area you tap with the current colour; fills are kept in the order you
+  make them (so a later stroke still covers a fill) and undo removes one like a
+  stroke.
 - **Colours** — ten swatches in the second row; it scrolls sideways if your thumb
   needs more room.
 - **Sizes** — S / M / L / XL, thin to 20 px. The eraser is always 3× the pen size.
@@ -134,13 +137,16 @@ powershell -ExecutionPolicy Bypass -File tools\pack-draw.ps1
 ## Verified
 
 Browser test at 360 × 640 (the 929's CSS size) and on a wide desktop window: the
-six-tool row fits without clipping (348 px of 348 px), the flipbook panel adds
+tool row scrolls sideways instead of clipping (571 px of buttons in a 350 px
+row at phone width, with Bucket still on screen), the flipbook panel adds
 95 px and leaves a 441 px canvas, the arrow collapses the bar to 40 px and gives
 the canvas 600 px, no horizontal page overflow, rotation re-fitting the canvas
 (with a poll backstop for rotates that arrive without a resize event), pen strokes,
 eraser, colour and size switching, undo, two-tap clear, save sheet with its frame
 label, + Frame / Copy / Delete, thumbnail switching, onion skin, playback
-start-stop at 6 / 10 / 15 fps, and PNG export — plus synthetic pointer events for
+start-stop at 6 / 10 / 15 fps, PNG export, and the bucket (tap fills a closed
+outline, undo restores the paper, and the fill survives leaving the project and
+reloading) — plus synthetic pointer events for
 touch-type and mouse-type strokes, a second finger being ignored mid-stroke,
 pointercancel ending cleanly, blocked context-menu and drag defaults, and pixel
 checks that ink actually lands on the canvas. No console errors and no network requests; the page contains

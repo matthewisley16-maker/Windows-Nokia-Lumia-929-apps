@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var APP_VER = "1.2.0.0";
+  var APP_VER = "1.3.0.0";
   var PK = "freepaint.projects.v2";
   var PW = 1920, PH = 1080;           // paper units, 16:9
   var SIZES = [6, 14, 28, 52];
@@ -9,6 +9,8 @@
   var FPS_PRESET = [5, 8, 10, 12, 15, 24, 30];
   var FPS_MIN = 1, FPS_MAX = 60;
   var HANDLE_R = 13;                   // selection rotate handle, screen px
+  var FILL_W = 960, FILL_H = 540;      // raster the bucket floods (half the paper)
+  var FILL_TOL = 42;                   // colour distance treated as the same area
   var COLOURS = ["#111111", "#37474f", "#e53935", "#fb8c00", "#fdd835",
                  "#43a047", "#00acc1", "#1e88e5", "#8e24aa", "#6d4c41"];
 
@@ -164,6 +166,50 @@
     g.globalCompositeOperation = "source-over";
   }
 
+  function framesFills(fr) {
+    if (!fr.fills) { fr.fills = []; }
+    return fr.fills;
+  }
+
+  // A fill is a half-resolution mask: transparent everywhere except the
+  // flooded region, so it can sit above or below ink depending on when it was
+  // made. New fills keep their canvas; loaded ones decode from the saved PNG.
+  function drawFill(g, f) {
+    var src = f._cv, img = f._img, w;
+    if (!src) {
+      if (!f.d) { return; }
+      if (!img) {
+        img = new Image();
+        img.onload = function () { if (proj) { renderFull(); } };
+        img.src = f.d;
+        f._img = img;
+      }
+      w = img.naturalWidth || img.width;
+      if (!img.complete || !w) { return; }
+      src = img;
+    }
+    g.drawImage(src, 0, 0, PW, PH);
+  }
+
+  function drawContent(g, fr) {
+    var ops = fr.op || "", fills = fr.fills || [], i, ch, si = 0, fi = 0;
+    if (ops) {
+      for (i = 0; i < ops.length; i++) {
+        ch = ops.charAt(i);
+        if (ch === "f") {
+          if (fi < fills.length) { drawFill(g, fills[fi]); }
+          fi++;
+        } else {
+          if (si < fr.strokes.length) { paint(g, fr.strokes[si]); }
+          si++;
+        }
+      }
+    }
+    for (; fi < fills.length; fi++) { drawFill(g, fills[fi]); }
+    for (; si < fr.strokes.length; si++) { paint(g, fr.strokes[si]); }
+    g.globalCompositeOperation = "source-over";
+  }
+
   function present() {
     pctx.setTransform(1, 0, 0, 1, 0, 0);
     pctx.globalCompositeOperation = "source-over";
@@ -175,7 +221,7 @@
     pctx.fillRect(0, 0, PW, PH);
     if (onion && isFlip() && frameIdx > 0 && !playing) {
       pctx.globalAlpha = 0.18;
-      paintAll(pctx, proj.frames[frameIdx - 1].strokes);
+      drawContent(pctx, proj.frames[frameIdx - 1]);
       pctx.globalAlpha = 1;
     }
     pctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -189,7 +235,7 @@
     lctx.setTransform(1, 0, 0, 1, 0, 0);
     lctx.clearRect(0, 0, PWpix, PHpix);
     applyView(lctx);
-    paintAll(lctx, strokesNow());
+    drawContent(lctx, proj.frames[frameIdx]);
     present();
     updateUndo();
   }
@@ -303,6 +349,9 @@
     if (name === "select" && proj) {
       toast("Loop around the strokes you want, then drag to move");
     }
+    if (name === "bucket" && proj) {
+      toast("Tap inside a shape to fill it");
+    }
     renderFull();
   }
 
@@ -321,7 +370,7 @@
   }
 
   function startStrokeAt(p) {
-    if (!proj || playing || pinch || tool === "select") { return; }
+    if (!proj || playing || pinch || tool === "select" || tool === "bucket") { return; }
     undoSnap = null;
     var s = {
       color: tool === "eraser" ? "#ffffff" : color,
@@ -348,6 +397,10 @@
 
   function endStroke() {
     if (!curStroke) { return; }
+    if (proj) {
+      var fr = proj.frames[frameIdx];
+      fr.op = (fr.op || "") + "s";
+    }
     curStroke = null;
     lastPt = null;
     bumpRev();
@@ -367,7 +420,9 @@
 
   function updateUndo() {
     var bs = bar.getElementsByTagName("button"), i;
-    var has = !!proj && (strokesNow().length > 0 || !!undoSnap);
+    var fr = proj ? proj.frames[frameIdx] : null;
+    var has = !!fr && (fr.strokes.length > 0 ||
+      (fr.fills && fr.fills.length > 0) || !!undoSnap);
     for (i = 0; i < bs.length; i++) {
       if (bs[i].getAttribute("data-act") === "undo") {
         bs[i].className = has ? "tool" : "tool off";
@@ -379,12 +434,169 @@
   function clearFrame() {
     if (!proj || playing) { return; }
     strokesNow().length = 0;
+    if (proj.frames[frameIdx].fills) { proj.frames[frameIdx].fills.length = 0; }
+    proj.frames[frameIdx].op = "";
     curStroke = null;
     sel = null;
     undoSnap = null;
     bumpRev();
     renderFull();
     updateFrames();
+  }
+
+  function undoFrame() {
+    if (!proj) { return; }
+    var fr = proj.frames[frameIdx], op = fr.op || "", fills = fr.fills || [];
+    var last = op.charAt(op.length - 1);
+    if (last === "f" && fills.length) {
+      fills.pop();
+      fr.op = op.slice(0, -1);
+    } else if (last === "s" && fr.strokes.length) {
+      fr.strokes.pop();
+      fr.op = op.slice(0, -1);
+    } else if (fr.strokes.length) {
+      fr.strokes.pop();
+    } else if (fills.length) {
+      fills.pop();
+    } else {
+      return;
+    }
+    sel = null;
+    bumpRev();
+    renderFull();
+    updateFrames();
+  }
+
+  /* ================= bucket fill ================= */
+
+  // Scanline flood fill over the half-res render of the current frame.
+  function floodMask(fw, fh, sx, sy, near) {
+    var vis = new Uint8Array(fw * fh);
+    var stack = [sx, sy], x, y, w, up, down;
+    while (stack.length) {
+      y = stack.pop();
+      x = stack.pop();
+      if (x < 0 || x >= fw || y < 0 || y >= fh) { continue; }
+      w = y * fw + x;
+      if (vis[w] || !near(x, y)) { continue; }
+      while (x > 0) {
+        w = y * fw + x - 1;
+        if (vis[w] || !near(x - 1, y)) { break; }
+        x--;
+      }
+      w = y * fw + x;
+      up = false;
+      down = false;
+      while (x < fw && !vis[w] && near(x, y)) {
+        vis[w] = 1;
+        if (y > 0) {
+          if (!up && !vis[w - fw] && near(x, y - 1)) {
+            stack.push(x, y - 1);
+            up = true;
+          } else if (up && (vis[w - fw] || !near(x, y - 1))) {
+            up = false;
+          }
+        }
+        if (y < fh - 1) {
+          if (!down && !vis[w + fw] && near(x, y + 1)) {
+            stack.push(x, y + 1);
+            down = true;
+          } else if (down && (vis[w + fw] || !near(x, y + 1))) {
+            down = false;
+          }
+        }
+        x++;
+        w++;
+      }
+    }
+    return vis;
+  }
+
+  // Grow the mask by one pixel so anti-aliased stroke edges do not leave a
+  // white halo between the ink and the fill.
+  function growMask(mask, fw, fh) {
+    var out = new Uint8Array(fw * fh), x, y, i;
+    for (y = 0; y < fh; y++) {
+      for (x = 0; x < fw; x++) {
+        i = y * fw + x;
+        if (mask[i] ||
+            (x > 0 && mask[i - 1]) || (x < fw - 1 && mask[i + 1]) ||
+            (y > 0 && mask[i - fw]) || (y < fh - 1 && mask[i + fw])) {
+          out[i] = 1;
+        }
+      }
+    }
+    return out;
+  }
+
+  function bucketAt(p) {
+    if (!proj || playing || pinch) { return; }
+    var fr = proj.frames[frameIdx], fw = FILL_W, fh = FILL_H;
+    var c = document.createElement("canvas"), g, d, sx, sy, at, tr, tg, tb, rgb;
+    var mask, out, mark, i, j;
+    c.width = fw;
+    c.height = fh;
+    g = c.getContext("2d");
+    g.fillStyle = "#ffffff";
+    g.fillRect(0, 0, fw, fh);
+    g.setTransform(fw / PW, 0, 0, fh / PH, 0, 0);
+    drawContent(g, fr);
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    sx = clamp(Math.round(p.x * fw / PW), 0, fw - 1);
+    sy = clamp(Math.round(p.y * fh / PH), 0, fh - 1);
+    try {
+      d = g.getImageData(0, 0, fw, fh).data;
+    } catch (e) {
+      toast("The bucket cannot read this canvas");
+      return;
+    }
+    at = (sy * fw + sx) * 4;
+    tr = d[at];
+    tg = d[at + 1];
+    tb = d[at + 2];
+    rgb = hex2rgb(color);
+    if (Math.abs(tr - rgb[0]) <= 8 && Math.abs(tg - rgb[1]) <= 8 &&
+        Math.abs(tb - rgb[2]) <= 8) {
+      toast("Already " + color);
+      return;
+    }
+    function near(x, y) {
+      var k = (y * fw + x) * 4;
+      return Math.abs(d[k] - tr) <= FILL_TOL &&
+             Math.abs(d[k + 1] - tg) <= FILL_TOL &&
+             Math.abs(d[k + 2] - tb) <= FILL_TOL;
+    }
+    mask = growMask(floodMask(fw, fh, sx, sy, near), fw, fh);
+    out = g.createImageData(fw, fh);
+    mark = out.data;
+    j = 0;
+    for (i = 0; i < fw * fh; i++) {
+      if (mask[i]) {
+        mark[i * 4] = rgb[0];
+        mark[i * 4 + 1] = rgb[1];
+        mark[i * 4 + 2] = rgb[2];
+        mark[i * 4 + 3] = 255;
+        j++;
+      }
+    }
+    if (!j) {
+      toast("Nothing to fill there");
+      return;
+    }
+    var mc = document.createElement("canvas"), f;
+    mc.width = fw;
+    mc.height = fh;
+    mc.getContext("2d").putImageData(out, 0, 0);
+    f = { c: color, d: "", _cv: mc };
+    try { f.d = mc.toDataURL("image/png"); } catch (e2) { f.d = ""; }
+    framesFills(fr).push(f);
+    fr.op = (fr.op || "") + "f";
+    bumpRev();
+    renderFull();
+    updateUndo();
+    updateFrames();
+    saveStore();
+    toast("Filled");
   }
 
   /* ================= select / move / rotate ================= */
@@ -628,6 +840,7 @@
 
   function stageDown(p) {
     if (!proj || playing || pinch) { return; }
+    if (tool === "bucket") { bucketAt(p); return; }
     if (tool !== "select") { startStrokeAt(p); return; }
     var u = selUi(), s, sp, dx, dy;
     if (u) {
@@ -941,12 +1154,7 @@
         updateFrames();
         return;
       }
-      if (!strokesNow().length) { return; }
-      strokesNow().pop();
-      sel = null;
-      bumpRev();
-      renderFull();
-      updateFrames();
+      undoFrame();
       return;
     }
     if (name === "clear") {
@@ -988,7 +1196,12 @@
 
   function updateBarTitle() {
     if (!barTitle) { return; }
-    var t = tool === "select" ? "Select" : (tool === "eraser" ? "Eraser" : "Pen");
+    var t = tool === "select" ? "Select" :
+      (tool === "eraser" ? "Eraser" : (tool === "bucket" ? "Bucket" : "Pen"));
+    if (tool === "bucket") {
+      barTitle.textContent = t + " \u00b7 " + color;
+      return;
+    }
     barTitle.textContent = t + " \u00b7 " + SIZE_LABEL[sizeIdx] +
       (tool === "eraser" ? "" : " \u00b7 " + color);
   }
@@ -1084,7 +1297,11 @@
           }
           return { c: s.color, w: s.size, e: s.erase ? 1 : 0, p: pts };
         });
-      })
+      }),
+      fx: p.frames.map(function (fr) {
+        return (fr.fills || []).map(function (f) { return { c: f.c, d: f.d }; });
+      }),
+      fo: p.frames.map(function (fr) { return fr.op || ""; })
     };
   }
 
@@ -1092,7 +1309,7 @@
     return {
       id: o.id, name: o.n, type: o.t === "flip" ? "flip" : "paint",
       fps: clamp(o.f || 10, FPS_MIN, FPS_MAX), updated: o.u || 0, thumb: o.th || "",
-      frames: (o.fr && o.fr.length ? o.fr : [[]]).map(function (f) {
+      frames: (o.fr && o.fr.length ? o.fr : [[]]).map(function (f, fi) {
         return {
           strokes: (f || []).map(function (s) {
             var pts = [], i;
@@ -1100,7 +1317,11 @@
               pts.push({ x: s.p[i], y: s.p[i + 1] });
             }
             return { color: s.c, size: s.w, erase: !!s.e, pts: pts };
-          })
+          }),
+          fills: ((o.fx && o.fx[fi]) || []).map(function (x) {
+            return { c: x.c, d: x.d };
+          }),
+          op: (o.fo && o.fo[fi]) || ""
         };
       })
     };
@@ -1168,7 +1389,7 @@
     if (!name) { name = "Untitled"; }
     var p = {
       id: newId(), name: name, type: chosenType(), fps: defaultFps,
-      updated: nowMs(), thumb: "", frames: [{ strokes: [] }]
+      updated: nowMs(), thumb: "", frames: [{ strokes: [], fills: [], op: "" }]
     };
     projects.unshift(p);
     saveStore();
@@ -1262,11 +1483,11 @@
       var tw = 192, th = 108;
       var c = document.createElement("canvas");
       c.width = tw; c.height = th;
-      var g = c.getContext("2d"), s = tw / PW, strokes = strokesNow();
+      var g = c.getContext("2d"), s = tw / PW;
       g.fillStyle = "#ffffff";
       g.fillRect(0, 0, tw, th);
       g.setTransform(s, 0, 0, s, 0, 0);
-      paintAll(g, strokes);
+      drawContent(g, proj.frames[frameIdx]);
       proj.thumb = c.toDataURL("image/jpeg", 0.55);
     } catch (e) {
       proj.thumb = "";
@@ -1333,7 +1554,8 @@
   /* ================= frames ================= */
 
   function frameThumb(fr) {
-    var sig = fr.strokes.length + ":" + (fr.rev || 0);
+    var sig = fr.strokes.length + ":" + (fr.fills ? fr.fills.length : 0) +
+      ":" + (fr.rev || 0);
     if (fr._c && fr._sig === sig) { return fr._c; }
     var c = document.createElement("canvas"), g, s;
     c.width = 40; c.height = 23;
@@ -1342,7 +1564,7 @@
     g.fillRect(0, 0, 40, 23);
     s = 40 / PW;
     g.setTransform(s, 0, 0, s, 0, 0);
-    paintAll(g, fr.strokes);
+    drawContent(g, fr);
     fr._c = c;
     fr._sig = sig;
     return c;
@@ -1378,8 +1600,12 @@
 
   function addFrame(copy) {
     if (!proj || !isFlip()) { return; }
-    var strokes = copy ? proj.frames[frameIdx].strokes.map(cloneStroke) : [];
-    proj.frames.splice(frameIdx + 1, 0, { strokes: strokes, rev: 0 });
+    var src = proj.frames[frameIdx];
+    var strokes = copy ? src.strokes.map(cloneStroke) : [];
+    var fills = copy ? (src.fills || []).map(cloneFill) : [];
+    proj.frames.splice(frameIdx + 1, 0, {
+      strokes: strokes, fills: fills, op: copy ? (src.op || "") : "", rev: 0
+    });
     frameIdx++;
     undoSnap = null;
     sel = null;
@@ -1393,6 +1619,10 @@
       pts.push({ x: s.pts[i].x, y: s.pts[i].y });
     }
     return { color: s.color, size: s.size, erase: s.erase, pts: pts };
+  }
+
+  function cloneFill(f) {
+    return { c: f.c, d: f.d, _cv: f._cv };
   }
 
   function deleteFrame() {
@@ -1439,7 +1669,7 @@
     g.fillStyle = "#ffffff";
     g.fillRect(0, 0, tw, th);
     g.setTransform(tw / PW, 0, 0, th / PH, 0, 0);
-    paintAll(g, strokesNow());
+    drawContent(g, proj.frames[frameIdx]);
     return c.toDataURL("image/png");
   }
 
