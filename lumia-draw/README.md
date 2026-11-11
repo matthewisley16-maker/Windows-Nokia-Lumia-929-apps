@@ -2,7 +2,7 @@
 
 Two apps in one, built for this phone: a touch drawing canvas, plus a flipbook
 that turns your frames into a looping animation. Ships as a single HTML file for
-running today, and as a signed Windows Phone 8.1 `.appx` package.
+running today, and as a signed Windows 10 Mobile `.appx` package.
 
 ```
 Downloads\FreePaint\
@@ -94,6 +94,22 @@ As many frames as the device will store — no 12-frame cap. Frames live in memo
 the session, so **Save** the ones you want to keep; the panel tells you which frame it
 exported.
 
+## Exporting
+
+**Export** in the toolbar opens the export sheet.
+
+- **PNG image** — the frame you are on, at 1920 × 1080 on the white paper.
+- **PNG frames** — every frame as its own numbered PNG (`frame_001.png`, ...).
+  Paintings only show the single-image button.
+- **MP4 video** — the whole flipbook at the project's fps, 1280 × 720.
+
+In the installed app the files are written to **Pictures › FreePaint** on the
+phone: `<project>.png` for a single image, a `<project>` folder for the frame
+sequence, and `<project>.mp4` for the video. The MP4 is rendered by Windows' own
+media engine (`MediaComposition.RenderToFileAsync`), so no encoder is bundled in
+the app. In a plain browser the files download instead, and MP4 uses the
+browser's MediaRecorder (MP4 where supported, otherwise WebM).
+
 ---
 
 ## The .appx
@@ -144,13 +160,16 @@ the canvas 600 px, no horizontal page overflow, rotation re-fitting the canvas
 (with a poll backstop for rotates that arrive without a resize event), pen strokes,
 eraser, colour and size switching, undo, two-tap clear, save sheet with its frame
 label, + Frame / Copy / Delete, thumbnail switching, onion skin, playback
-start-stop at 6 / 10 / 15 fps, PNG export, and the bucket (tap fills a closed
+start-stop at 6 / 10 / 15 fps, PNG export, the bucket (tap fills a closed
 outline, undo restores the paper, and the fill survives leaving the project and
-reloading) — plus synthetic pointer events for
+reloading), and the export sheet in a browser (one painting PNG, three numbered
+frame PNGs, and a MediaRecorder MP4) — plus synthetic pointer events for
 touch-type and mouse-type strokes, a second finger being ignored mid-stroke,
 pointercancel ending cleanly, blocked context-menu and drag defaults, and pixel
 checks that ink actually lands on the canvas. No console errors and no network requests; the page contains
-no external URLs.
+no external URLs. The WinRT export branch (Pictures\FreePaint, FileIO and
+MediaComposition) cannot run in a browser, so it is code-complete but untested
+on the phone.
 
 Package checks: `makeappx pack` succeeded, `signtool sign` reported
 *Successfully signed*, and `makeappx unpack` returns the expected nine entries

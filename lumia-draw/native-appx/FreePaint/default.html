@@ -229,6 +229,7 @@ button{font-family:inherit;color:inherit;}
         <button class="tool" data-act="clear">Clear</button>
         <button class="tool colorbtn" data-act="wheel"><span id="cprev"></span>Colour</button>
         <button class="tool" data-act="save">Save</button>
+        <button class="tool" data-act="export">Export</button>
         <button class="tool fliponly" data-act="frames">Frames</button>
         <button class="tool" data-act="zoomout">&#8722;</button>
         <button class="tool" data-act="zoomin">+</button>
@@ -321,6 +322,18 @@ button{font-family:inherit;color:inherit;}
     <p id="cmsg"></p>
     <button class="danger" id="cok" data-act="confirmyes">Delete</button>
     <button class="ghostb" data-act="confirmno">Cancel</button>
+  </div>
+</div>
+
+<div id="exportsheet" class="overlay">
+  <div class="sheetbox">
+    <h2>Export project</h2>
+    <p class="note" id="exportnote"></p>
+    <button class="primary" data-act="exportpng">PNG image</button>
+    <button class="ghostb" id="exframes" data-act="exportframes">PNG frames (one per frame)</button>
+    <button class="ghostb" id="exmp4" data-act="exportmp4">MP4 video</button>
+    <p class="note" id="exportstatus"></p>
+    <button class="ghostb" data-act="closeexport">Back</button>
   </div>
 </div>
 

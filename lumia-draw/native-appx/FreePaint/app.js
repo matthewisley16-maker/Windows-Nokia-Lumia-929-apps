@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var APP_VER = "1.3.0.0";
+  var APP_VER = "1.4.0.0";
   var PK = "freepaint.projects.v2";
   var PW = 1920, PH = 1080;           // paper units, 16:9
   var SIZES = [6, 14, 28, 52];
@@ -36,7 +36,9 @@
       menuBox = $("barmenu"), barChev = $("barchev"), barTitle = $("bartitle"),
       fpsSheet = $("fpsheet"), fpsValue = $("fpsvalue"), fpsRange = $("fpsrange"),
       fpsPresets = $("fpspresets"), confirmSheet = $("confirmsheet"),
-      cTitle = $("ctitle"), cMsg = $("cmsg"), cOk = $("cok");
+      cTitle = $("ctitle"), cMsg = $("cmsg"), cOk = $("cok"),
+      exportSheet = $("exportsheet"), exportNote = $("exportnote"),
+      exportStatus = $("exportstatus"), exFrames = $("exframes"), exMp4 = $("exmp4");
 
   var pctx = paper.getContext("2d");
   var layer = document.createElement("canvas");
@@ -328,7 +330,7 @@
 
   function uiBlocked() {
     return isOn(newsheet) || isOn(wheelsheet) || isOn(saveSheet) ||
-           isOn(diag) || isOn(fpsSheet) || isOn(confirmSheet);
+           isOn(diag) || isOn(fpsSheet) || isOn(confirmSheet) || isOn(exportSheet);
   }
 
   /* ================= drawing ================= */
@@ -1171,6 +1173,11 @@
       return;
     }
     if (name === "save") { doSave(); return; }
+    if (name === "export") { openExportSheet(); return; }
+    if (name === "closeexport") { setOverlay(exportSheet, false); return; }
+    if (name === "exportpng") { exportPNG(false); return; }
+    if (name === "exportframes") { exportPNG(true); return; }
+    if (name === "exportmp4") { exportMP4(); return; }
     if (name === "frames") {
       framesOpen = !framesOpen;
       animBox.className = framesOpen ? "on" : "";
@@ -1687,6 +1694,346 @@
       ? ("Frame " + (frameIdx + 1) + " of " + proj.frames.length + " is shown below.")
       : "";
     setOverlay(saveSheet, true);
+  }
+
+  /* ================= export ================= */
+
+  var exportBusy = false;
+
+  function setExportStatus(msg) {
+    if (exportStatus) { exportStatus.textContent = msg; }
+  }
+
+  function isWinRT() {
+    try {
+      return !!(window.Windows && Windows.Storage && Windows.Storage.KnownFolders &&
+                Windows.Storage.KnownFolders.picturesLibrary);
+    } catch (e) { return false; }
+  }
+
+  function canMakeMP4() {
+    if (isWinRT()) {
+      try {
+        return !!(Windows.Media && Windows.Media.Editing &&
+                  Windows.Media.Editing.MediaComposition &&
+                  Windows.Media.Editing.MediaClip);
+      } catch (e) { return false; }
+    }
+    try {
+      return !!(window.MediaRecorder && HTMLCanvasElement.prototype.captureStream);
+    } catch (e) { return false; }
+  }
+
+  function safeName() {
+    var n = proj ? String(proj.name || "FreePaint") : "FreePaint";
+    n = n.replace(/[\\\/:*?"<>|]/g, "_").replace(/\s+$/, "");
+    if (!n) { n = "FreePaint"; }
+    if (n.length > 40) { n = n.slice(0, 40); }
+    return n;
+  }
+
+  function frameFileName(i, total, prefix) {
+    var n = i + 1;
+    while (String(n).length < String(total).length || String(n).length < 3) { n = "0" + n; }
+    return (prefix || "frame_") + n + ".png";
+  }
+
+  function exportCanvas(fr, w, h) {
+    var c = document.createElement("canvas"), g;
+    c.width = w;
+    c.height = h;
+    g = c.getContext("2d");
+    g.fillStyle = "#ffffff";
+    g.fillRect(0, 0, w, h);
+    g.setTransform(w / PW, 0, 0, h / PH, 0, 0);
+    drawContent(g, fr);
+    return c;
+  }
+
+  // Fills saved earlier decode as images; make sure they are ready before a
+  // frame is rasterised, otherwise an export could miss a colour layer.
+  function preloadFills(frames) {
+    var jobs = [], i, j, fs;
+    function job(f) {
+      return new Promise(function (resolve) {
+        if (f._cv) { resolve(); return; }
+        if (f._img && f._img.complete && (f._img.naturalWidth || f._img.width)) {
+          resolve();
+          return;
+        }
+        var img = new Image();
+        img.onload = function () { resolve(); };
+        img.onerror = function () { resolve(); };
+        img.src = f.d;
+        f._img = img;
+      });
+    }
+    for (i = 0; i < frames.length; i++) {
+      fs = frames[i].fills || [];
+      for (j = 0; j < fs.length; j++) { jobs.push(job(fs[j])); }
+    }
+    return Promise.all(jobs);
+  }
+
+  function pngBytes(c) {
+    var url = c.toDataURL("image/png");
+    var b64 = url.slice(url.indexOf(",") + 1);
+    var bin = atob(b64), n = bin.length, out = new Uint8Array(n), i;
+    for (i = 0; i < n; i++) { out[i] = bin.charCodeAt(i); }
+    return out;
+  }
+
+  // WinRT byte[] is a plain array in the JavaScript projection.
+  function byteArray(u8) {
+    var out = new Array(u8.length), i;
+    for (i = 0; i < u8.length; i++) { out[i] = u8[i]; }
+    return out;
+  }
+
+  function downloadURL(name, url) {
+    try {
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () {
+        if (a.parentNode) { a.parentNode.removeChild(a); }
+      }, 500);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function exportPicturesFolder() {
+    return Windows.Storage.KnownFolders.picturesLibrary
+      .createFolderAsync("FreePaint", Windows.Storage.CreationCollisionOption.openIfExists);
+  }
+
+  function writeWinRTFile(folder, name, bytes) {
+    return folder.createFileAsync(name, Windows.Storage.CreationCollisionOption.replaceExisting)
+      .then(function (file) {
+        return Windows.Storage.FileIO.writeBytesAsync(file, byteArray(bytes))
+          .then(function () { return file; });
+      });
+  }
+
+  function exportPNG(all) {
+    if (!proj || exportBusy) { return; }
+    exportBusy = true;
+    setExportStatus("Preparing...");
+    var frames = all ? proj.frames : [proj.frames[frameIdx]];
+    var name = safeName();
+    preloadFills(frames).then(function () {
+      if (isWinRT()) {
+        return exportPicturesFolder().then(function (folder) {
+          if (!all) {
+            return writeWinRTFile(folder, name + ".png",
+              pngBytes(exportCanvas(frames[0], 1920, 1080))).then(function (f) {
+                return "Pictures\\FreePaint\\" + f.name;
+              });
+          }
+          return folder.createFolderAsync(name, Windows.Storage.CreationCollisionOption.openIfExists)
+            .then(function (sub) {
+              var i = 0;
+              function next() {
+                if (i >= frames.length) { return sub; }
+                setExportStatus("Saving frame " + (i + 1) + " of " + frames.length + "...");
+                var file = frameFileName(i, frames.length);
+                return writeWinRTFile(sub, file, pngBytes(exportCanvas(frames[i], 1920, 1080)))
+                  .then(function () { i++; return next(); });
+              }
+              return next().then(function () {
+                return "Pictures\\FreePaint\\" + name;
+              });
+            });
+        });
+      }
+      if (!all) {
+        downloadURL(name + ".png", exportCanvas(frames[0], 1920, 1080).toDataURL("image/png"));
+        return "Downloads";
+      }
+      var i = 0;
+      function nextDownload() {
+        if (i >= frames.length) { return "Downloads"; }
+        setExportStatus("Downloading frame " + (i + 1) + " of " + frames.length + "...");
+        downloadURL(name + "_" + frameFileName(i, frames.length, "").replace(".png", "") + ".png",
+          exportCanvas(frames[i], 1920, 1080).toDataURL("image/png"));
+        i++;
+        return new Promise(function (res) { setTimeout(res, 260); }).then(nextDownload);
+      }
+      return nextDownload();
+    }).then(function (where) {
+      exportBusy = false;
+      setExportStatus("Saved to " + where);
+      toast("Exported");
+    }, function (err) {
+      exportBusy = false;
+      setExportStatus("Export failed: " + ((err && err.message) || err));
+      toast("Export failed");
+    });
+  }
+
+  function transcodeOk(reason) {
+    if (reason === 0) { return true; }
+    try { return reason === Windows.Media.Transcoding.TranscodeFailureReason.none; }
+    catch (e) { return false; }
+  }
+
+  function mp4WinRT(frames) {
+    var temp = Windows.Storage.ApplicationData.current.temporaryFolder;
+    var sub = null, files = [];
+    var ticks = Math.max(1, Math.round(10000000 / clamp(proj.fps || 10, FPS_MIN, FPS_MAX)));
+    var w = 1280, h = 720;
+    return temp.createFolderAsync("FreePaintExport", Windows.Storage.CreationCollisionOption.openIfExists)
+      .then(function (f) { sub = f; return sub.getFilesAsync(); })
+      .then(function (old) {
+        var i = 0;
+        function wipe() {
+          if (i >= old.length) { return; }
+          return old[i].deleteAsync().then(function () { i++; return wipe(); });
+        }
+        return wipe();
+      })
+      .then(function () {
+        var i = 0;
+        function one() {
+          if (i >= frames.length) { return files; }
+          setExportStatus("Rendering frame " + (i + 1) + " of " + frames.length + "...");
+          return writeWinRTFile(sub, frameFileName(i, frames.length, "f") ,
+            pngBytes(exportCanvas(frames[i], w, h))).then(function (file) {
+              files.push(file);
+              i++;
+              return one();
+            });
+        }
+        return one();
+      })
+      .then(function () {
+        setExportStatus("Making the video...");
+        var clips = [], i;
+        for (i = 0; i < files.length; i++) {
+          clips.push(Windows.Media.Editing.MediaClip.createFromImageFileAsync(files[i], ticks));
+        }
+        return Promise.all(clips);
+      })
+      .then(function (clips) {
+        var comp = new Windows.Media.Editing.MediaComposition(), i;
+        for (i = 0; i < clips.length; i++) { comp.clips.append(clips[i]); }
+        return exportPicturesFolder().then(function (folder) {
+          return folder.createFileAsync(safeName() + ".mp4",
+            Windows.Storage.CreationCollisionOption.replaceExisting).then(function (out) {
+              return new Promise(function (resolve, reject) {
+                var op = comp.renderToFileAsync(out);
+                op.then(function (reason) {
+                  if (transcodeOk(reason)) { resolve(out.name); }
+                  else { reject(new Error("render error " + reason)); }
+                }, function (e) { reject(e); });
+              });
+            });
+        });
+      })
+      .then(function (fileName) { return "Pictures\\FreePaint\\" + fileName; });
+  }
+
+  function mp4Browser(frames) {
+    var mimes = ["video/mp4;codecs=avc1.42E01E", "video/mp4", "video/webm;codecs=vp9",
+                 "video/webm;codecs=vp8", "video/webm"];
+    var mime = "", i;
+    for (i = 0; i < mimes.length; i++) {
+      try {
+        if (MediaRecorder.isTypeSupported(mimes[i])) { mime = mimes[i]; break; }
+      } catch (e) { }
+    }
+    if (!mime) { return Promise.reject(new Error("no video recorder")); }
+    var w = 1280, h = 720;
+    var c = document.createElement("canvas"), stream, rec, chunks = [];
+    c.width = w;
+    c.height = h;
+    var g = c.getContext("2d");
+    var fps = clamp(proj.fps || 10, FPS_MIN, FPS_MAX);
+    try { stream = c.captureStream(fps); } catch (e) { return Promise.reject(e); }
+    try {
+      rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
+    } catch (e) { return Promise.reject(e); }
+    return new Promise(function (resolve, reject) {
+      var i = 0, timer = null;
+      function draw() {
+        g.fillStyle = "#ffffff";
+        g.fillRect(0, 0, w, h);
+        g.setTransform(w / PW, 0, 0, h / PH, 0, 0);
+        drawContent(g, frames[i]);
+      }
+      rec.ondataavailable = function (e) {
+        if (e.data && e.data.size) { chunks.push(e.data); }
+      };
+      rec.onerror = function (e) { reject(e.error || e); };
+      rec.onstop = function () {
+        var ext = mime.indexOf("mp4") >= 0 ? "mp4" : "webm";
+        var blob = new Blob(chunks, { type: mime.split(";")[0] });
+        var url = URL.createObjectURL(blob);
+        var name = safeName() + "." + ext;
+        downloadURL(name, url);
+        setTimeout(function () { try { URL.revokeObjectURL(url); } catch (e) { } }, 30000);
+        resolve(name + " (" + ext.toUpperCase() + ")");
+      };
+      rec.start();
+      draw();
+      timer = setInterval(function () {
+        i++;
+        if (i >= frames.length) {
+          clearInterval(timer);
+          setTimeout(function () { try { rec.stop(); } catch (e) { reject(e); } }, 150);
+          return;
+        }
+        draw();
+      }, Math.round(1000 / fps));
+      setTimeout(function () {
+        if (i === 0) { clearInterval(timer); try { rec.stop(); } catch (e) { } }
+      }, 15000);
+    });
+  }
+
+  function exportMP4() {
+    if (!proj || exportBusy) { return; }
+    if (!isFlip() || proj.frames.length < 2) {
+      setExportStatus("A video needs at least two frames.");
+      return;
+    }
+    if (!canMakeMP4()) {
+      setExportStatus("MP4 is not available on this device; PNG frames still work.");
+      return;
+    }
+    exportBusy = true;
+    setExportStatus("Preparing...");
+    preloadFills(proj.frames).then(function () {
+      return isWinRT() ? mp4WinRT(proj.frames) : mp4Browser(proj.frames);
+    }).then(function (where) {
+      exportBusy = false;
+      setExportStatus("Saved to " + where);
+      toast("Video exported");
+    }, function (err) {
+      exportBusy = false;
+      setExportStatus("MP4 failed: " + ((err && err.message) || err));
+      toast("MP4 export failed");
+    });
+  }
+
+  function openExportSheet() {
+    if (!proj) { return; }
+    stopPlay();
+    if (exFrames) { exFrames.style.display = isFlip() ? "block" : "none"; }
+    if (exMp4) { exMp4.style.display = isFlip() ? "block" : "none"; }
+    if (exportNote) {
+      exportNote.textContent = isWinRT()
+        ? "Files are written to Pictures\\FreePaint on the phone."
+        : "Files download from the browser. MP4 needs MediaRecorder, which the phone's browser does not have.";
+    }
+    setExportStatus(isFlip() && !canMakeMP4()
+      ? "MP4 is not available on this device; PNG frames still work."
+      : "");
+    exportBusy = false;
+    setOverlay(exportSheet, true);
   }
 
   /* ================= colour wheel ================= */
