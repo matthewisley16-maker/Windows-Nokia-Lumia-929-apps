@@ -4,7 +4,7 @@ The project is a small suite of apps for a **Nokia Lumia 929 (Icon)** running **
 
 | App | Folder | What it is | Status |
 |---|---|---|---|
-| **FreePaint** | `lumia-draw/` | Drawing canvas with a flipbook animator | **1.2.0.0** `.appx` |
+| **FreePaint** | `lumia-draw/` | Drawing canvas with a flipbook animator | **1.4.0.0** `.appx` |
 | **MP4Lumia** | `MP4Lumia/` | Netflix-style player for the videos on the phone | **1.0.0.0** `.appx` |
 | **MP3Lumia** | `MP3Lumia/` | Spotify-style player for the music on the phone | **1.0.0.0** `.appx` |
 | **LumiaRead** | — | Reading app | In development — source not published here yet |
@@ -20,6 +20,8 @@ A finger drawing canvas and a flipbook in one app.
 - **Undo** as far back as you like, including undoing a move or rotate.
 - **Frames** — unlimited (no 12-frame cap), thumbnails, copy, delete, onion skin, play/stop.
 - **Custom FPS** — 1–60, stored per project, with presets 5/8/10/12/15/24/30.
+- **Export** — the current frame as a PNG, every frame as numbered PNGs, or the
+  whole flipbook as an MP4, written to `Pictures\FreePaint` on the phone.
 - **Projects** saved on the phone and deleted only after an in-app confirmation.
 - **Drop-down toolbar** — the ▲/▼ arrow collapses it so the canvas fills the screen.
 
